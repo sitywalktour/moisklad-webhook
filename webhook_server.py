@@ -1,4 +1,6 @@
-from fastapi import FastAPI, Request
+@app.get("/")
+def home():
+    return {"message": "Webhook server is running!"}from fastapi import FastAPI, Request
 import requests
 
 app = FastAPI()
