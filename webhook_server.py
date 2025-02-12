@@ -5,8 +5,8 @@ app = FastAPI()
 
 # Данные для Supabase
 SUPABASE_URL = "https://fmpbomqaxzaphpwfghis.supabase.co"
-SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtcGJvbXFheHphcGhwd2ZnaGlzIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczMzY2OTA5NSwiZXhwIjoyMDQ5MjQ1MDk1fQ.zuttQo4VFzxfgl8eJd4qC_Zt7ebpGtbP3YbVyRPtTpw"
-TABLE_NAME = "productonline"
+SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+TABLE_NAME = "productline"
 
 @app.get("/")
 async def home():
@@ -19,14 +19,20 @@ async def receive_webhook(request: Request):
 
     # Проверяем, что это товар
     if "meta" in data and "type" in data["meta"] and data["meta"]["type"] == "product":
+        attributes = data.get("attributes", [])
+
+        # Ищем цвет и размер в списке атрибутов
+        color = next((attr["value"] for attr in attributes if attr.get("name") == "Цвет"), None)
+        size = next((attr["value"] for attr in attributes if attr.get("name") == "Размер"), None)
+
         product_data = {
             "name": data.get("name"),
             "code": data.get("code"),
             "barcode": data.get("barcodes", [{}])[0].get("ean") if "barcodes" in data and data["barcodes"] else None,
-            "price": data.get("salePrices", [{}])[0].get("value") / 100 if "salePrices" in data else None,
+            "price": data.get("salePrices", [{}])[0].get("value", 0) / 100 if "salePrices" in data else None,
             "stock": data.get("quantity") if "quantity" in data else None,
-            "color": data.get("attributes", {}).get("Цвет", None),
-            "size": data.get("attributes", {}).get("Размер", None),
+            "color": color,
+            "size": size,
         }
 
         # Отправляем данные в Supabase
